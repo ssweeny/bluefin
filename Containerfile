@@ -61,6 +61,17 @@ RUN if [[ "${IMAGE_FLAVOR}" =~ "nvidia" && "${IMAGE_FLAVOR}" =~ "39" ]]; then \
         rm /etc/yum.repos.d/_copr_gloriouseggroll-nvidia-explicit-sync.repo \
     ; fi
 
+# Add system76 repo
+RUN wget https://copr.fedorainfracloud.org/coprs/szydell/system76/repo/fedora-"${FEDORA_MAJOR_VERSION}"/szydell-system76-fedora-"${FEDORA_MAJOR_VERSION}".repo -O /etc/yum.repos.d/system76-fedora"${FEDORA_MAJOR_VERSION}".repo && \
+    rpm-ostree install \
+        system76-dkms \
+        system76-io-dkms \
+        system76-acpi-dkms \
+        system76-power \
+        system76-drivers \
+        system76-firmware \
+        firmware-manager
+
 COPY usr /usr
 COPY just /tmp/just
 COPY etc/yum.repos.d/ /etc/yum.repos.d/
@@ -107,12 +118,15 @@ RUN wget https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh -O /
     systemctl enable ublue-update.timer && \
     systemctl enable ublue-system-setup.service && \
     systemctl --global enable ublue-user-setup.service && \
+    systemctl enable com.system76.PowerDaemon.service system76-power-wake system76-firmware-daemon && \
+    systemctl enable --user com.system76.FirmwareManager.Notify.timer && \
     fc-cache -f /usr/share/fonts/ubuntu && \
     fc-cache -f /usr/share/fonts/inter && \
     find /tmp/just -iname '*.just' -exec printf "\n\n" \; -exec cat {} \; >> /usr/share/ublue-os/just/60-custom.just && \
     rm -f /etc/yum.repos.d/tailscale.repo && \
     rm -f /etc/yum.repos.d/charm.repo && \
     rm -f /etc/yum.repos.d/ublue-os-staging-fedora-"${FEDORA_MAJOR_VERSION}".repo && \
+    rm -f /etc/yum.repos.d/fedora-system76-"${FEDORA_MAJOR_VERSION}".repo && \
     echo "Hidden=true" >> /usr/share/applications/fish.desktop && \
     echo "Hidden=true" >> /usr/share/applications/htop.desktop && \
     echo "Hidden=true" >> /usr/share/applications/nvtop.desktop && \
